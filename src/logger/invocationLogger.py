@@ -69,18 +69,15 @@ class InvocationLogger(type):
 
       class_name = instance.__meta_original_classname__
       prefix = "%s.%s" % (class_name, function.__name__)
-      # Note that what we receive as 'logger' here is a property that
-      # can be used to retrieve a logger object, but it requires us
-      # to pass in the actual object instance first.
       logger = instance.__meta_logger__
-      logger.debug("%s(%s)", prefix, stringify(*args, **kwargs))
+      logger("%s(%s)", prefix, stringify(*args, **kwargs))
       try:
         result = function(instance, *args, **kwargs)
       except BaseException as e:
-        logger.debug("%s: raised %s (\"%s\")", prefix, type(e).__name__, str(e))
+        logger("%s: raised %s (\"%s\")", prefix, type(e).__name__, str(e))
         raise
 
-      logger.debug("%s: %s", prefix, result)
+      logger("%s: %s", prefix, result)
       return result
 
     return wrapper

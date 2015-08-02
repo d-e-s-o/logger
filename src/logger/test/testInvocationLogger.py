@@ -75,7 +75,7 @@ class TestInvocationLogger(TestCase):
     ]
 
     self.assertIsNone(self._object.method1())
-    self.assertEqual(self._logger.debug.call_args_list, expected_calls)
+    self.assertEqual(self._logger.call_args_list, expected_calls)
 
 
   def testMethodInvocationWithArgumentAndReturn(self):
@@ -87,7 +87,7 @@ class TestInvocationLogger(TestCase):
     ]
 
     self.assertEqual(self._object.method2(argument), argument)
-    self.assertEqual(self._logger.debug.call_args_list, expected_calls)
+    self.assertEqual(self._logger.call_args_list, expected_calls)
 
 
   def testMethodInvocationWithMultipleArguments(self):
@@ -102,7 +102,7 @@ class TestInvocationLogger(TestCase):
     ]
 
     self.assertEqual(self._object.method3(arg1, arg2), result)
-    self.assertEqual(self._logger.debug.call_args_list, expected_calls)
+    self.assertEqual(self._logger.call_args_list, expected_calls)
 
 
   def testMethodInvocationRaises(self):
@@ -115,7 +115,7 @@ class TestInvocationLogger(TestCase):
     with self.assertRaises(RuntimeError):
       self._object.method4()
 
-    self.assertEqual(self._logger.debug.call_args_list, expected_calls)
+    self.assertEqual(self._logger.call_args_list, expected_calls)
 
 
   def testMethodInvocationWithKeywordArgument(self):
@@ -126,7 +126,7 @@ class TestInvocationLogger(TestCase):
     ]
 
     self.assertEqual(self._object.method5(foo='test'), 'testtest')
-    self.assertEqual(self._logger.debug.call_args_list, expected_calls)
+    self.assertEqual(self._logger.call_args_list, expected_calls)
 
 
 if __name__ == '__main__':

@@ -105,10 +105,14 @@ class InvocationLogger(type):
 
 def Logged(cls, logger):
   """Wrap a class to include proper logging of method calls."""
+  # In order to work in conjunction with an already "applied" meta
+  # class we have to create a new type here that inherits from this
+  # meta class.
+  Meta = type('InvocationLogger', (InvocationLogger, type(cls)), {})
   # TODO: It would be best to use the type() built-in here. However, it
   #       is unclear how to incorporate meta classes (and passing of
   #       arguments to the same) into it.
-  class __Proxy(cls, metaclass=InvocationLogger, logger=logger):
+  class __Proxy(cls, metaclass=Meta, logger=logger):
     """Proxy class required for proper interception."""
     # For appropriate logging we want to store the name of the wrapped class.
     # TODO: We might want to check if we can simply infer the original

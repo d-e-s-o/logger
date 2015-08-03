@@ -129,5 +129,31 @@ class TestInvocationLogger(TestCase):
     self.assertEqual(self._logger.call_args_list, expected_calls)
 
 
+class TestInvocationLoggerWithMeta(TestCase):
+  """Test to verify the invocation logger's compliance with meta classes."""
+  def testLoggedUsageOnClassWithMetaClass(self):
+    """Verify that the Logged() function works correctly with meta classes."""
+    class MetaBar(type):
+      """A very simple dummy meta class."""
+      pass
+
+    class Foo(metaclass=MetaBar):
+      """A dummy class already using a meta class."""
+      def foo(self):
+        """Some method returning 42."""
+        return 42
+
+    expected_calls = [
+      call('%s(%s)', 'Foo.foo', ''),
+      call('%s: %s', 'Foo.foo', 42),
+    ]
+
+    logger = MagicMock()
+    foo = Logged(Foo, logger)()
+
+    self.assertEqual(foo.foo(), 42)
+    self.assertEqual(logger.call_args_list, expected_calls)
+
+
 if __name__ == '__main__':
   main()

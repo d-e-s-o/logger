@@ -37,7 +37,14 @@ from logger import (
 )
 
 
-class _Object:
+class _Base:
+  """A dummy base class."""
+  def baseMethod1(self, arg1, arg2=None):
+    """A method accepting up to three arguments."""
+    return arg1 + arg2
+
+
+class _Object(_Base):
   """A dummy object with a couple of public methods."""
   def method1(self):
     """A method accepting no parameters and returning nothing."""
@@ -137,6 +144,21 @@ class InvocationLoggerTest(metaclass=ABCMeta):
     ]
 
     self.assertEqual(self._object.method5(foo='test'), 'testtest')
+    self.assertEqual(self._logger.call_args_list, expected_calls)
+
+
+  def testBaseMethodInvocation(self):
+    """Verify that methods in the base class are wrapped properly as well."""
+    arg1 = 2
+    arg2 = 4
+    result = arg1 + arg2
+
+    expected_calls = [
+      call('%s(%s)', '_Object.baseMethod1', '%d, arg2=%d' % (arg1, arg2)),
+      call('%s: %s', '_Object.baseMethod1', result),
+    ]
+
+    self.assertEqual(self._object.baseMethod1(arg1, arg2=arg2), result)
     self.assertEqual(self._logger.call_args_list, expected_calls)
 
 

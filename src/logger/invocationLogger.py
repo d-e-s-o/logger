@@ -37,10 +37,12 @@ class InvocationLogger(type):
       (args and kwargs) are required for argument passing to the meta
       class to work correctly.
     """
+    class_name = kwargs['class_name']
+    logger = kwargs['logger']
     # Do not include 'metaCls' in the replacement -- it is a meta class
     # and of no value for us here.
     for base in bases:
-      InvocationLogger._overwriteMethods(base, namespace)
+      InvocationLogger._overwriteMethods(base, namespace, class_name, logger)
 
     return type.__new__(metaCls, name, bases, namespace)
 
@@ -48,11 +50,10 @@ class InvocationLogger(type):
   def __init__(self, *args, **kwargs):
     """Initialize the meta class object."""
     super().__init__(self)
-    self.__meta_logger__ = kwargs['logger']
 
 
   @staticmethod
-  def _wrap(function):
+  def _wrap(function, class_name, logger):
     """Wrap the given function."""
     @wraps(function)
     def wrapper(instance, *args, **kwargs):
@@ -67,9 +68,7 @@ class InvocationLogger(type):
         # strings by a comma.
         return ', '.join(chain(t, d))
 
-      class_name = instance.__meta_original_classname__
       prefix = "%s.%s" % (class_name, function.__name__)
-      logger = instance.__meta_logger__
       logger("%s(%s)", prefix, stringify(*args, **kwargs))
       try:
         result = function(instance, *args, **kwargs)
@@ -84,7 +83,7 @@ class InvocationLogger(type):
 
 
   @staticmethod
-  def _overwriteMethods(cls, namespace):
+  def _overwriteMethods(cls, namespace, class_name, logger):
     """Overwrite methods of a certain pattern in the given class."""
     for obj in dir(cls):
       # We only care for objects that have not been wrapped and are
@@ -96,11 +95,11 @@ class InvocationLogger(type):
         #       if we require this functionality.
         if callable(attr):
           # Replace the method with a wrapped version.
-          namespace[obj] = InvocationLogger._wrap(attr)
+          namespace[obj] = InvocationLogger._wrap(attr, class_name, logger)
 
     # Recurse down into all base classes.
     for base in cls.__bases__:
-      InvocationLogger._overwriteMethods(base, namespace)
+      InvocationLogger._overwriteMethods(base, namespace, class_name, logger)
 
 
 def Logged(cls, logger):
@@ -112,12 +111,8 @@ def Logged(cls, logger):
   # TODO: It would be best to use the type() built-in here. However, it
   #       is unclear how to incorporate meta classes (and passing of
   #       arguments to the same) into it.
-  class __Proxy(cls, metaclass=Meta, logger=logger):
+  class __Proxy(cls, metaclass=Meta, class_name=cls.__name__, logger=logger):
     """Proxy class required for proper interception."""
-    # For appropriate logging we want to store the name of the wrapped class.
-    # TODO: We might want to check if we can simply infer the original
-    #       class name from the instance we got passed in to the wrapped
-    #       call.
-    __meta_original_classname__ = cls.__name__
+    pass
 
   return __Proxy

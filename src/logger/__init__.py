@@ -23,4 +23,5 @@
 from logger.invocationLogger import (
   InvocationLogger,
   Logged,
+  LoggedObj,
 )

@@ -102,6 +102,24 @@ class InvocationLogger(type):
       InvocationLogger._overwriteMethods(base, namespace, class_name, logger)
 
 
+  @staticmethod
+  def _overwriteMethodsOnObj(cls, logger):
+    """Overwrite methods of a certain pattern in the given object."""
+    def bind(attr):
+      fn = InvocationLogger._wrap(attr, type(cls).__name__, logger)
+      return lambda *args, **kwargs: fn(cls, *args, **kwargs)
+
+    for obj in dir(cls):
+      # We are only interested in public functions.
+      if not obj.startswith('_'):
+        # It is important to get the unbound version of the attribute
+        # from the type as opposed to the one from the object.
+        attr = getattr(type(cls), obj)
+        if callable(attr):
+          # Replace the method with a wrapped version.
+          setattr(cls, obj, bind(attr))
+
+
 def Logged(cls, logger):
   """Wrap a class to include proper logging of method calls."""
   # In order to work in conjunction with an already "applied" meta
@@ -116,3 +134,9 @@ def Logged(cls, logger):
     pass
 
   return __Proxy
+
+
+def LoggedObj(obj, logger):
+  """Modify an object to include proper logging of method calls."""
+  InvocationLogger._overwriteMethodsOnObj(obj, logger)
+  return obj

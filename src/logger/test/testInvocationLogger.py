@@ -19,6 +19,10 @@
 
 """Tests for the invocation logging facility."""
 
+from abc import (
+  ABCMeta,
+  abstractmethod,
+)
 from unittest import (
   main,
   TestCase,
@@ -29,6 +33,7 @@ from unittest.mock import (
 )
 from logger import (
   Logged,
+  LoggedObj,
 )
 
 
@@ -59,12 +64,18 @@ class _Object:
     return 2 * foo
 
 
-class TestInvocationLogger(TestCase):
-  """Test case for the invocation logger facility."""
+class InvocationLoggerTest(metaclass=ABCMeta):
+  """Test case mixin for the invocation logger facility."""
+  @abstractmethod
+  def createObject(self):
+    """Create an object to run our tests on."""
+    pass
+
+
   def setUp(self):
     """Set up a test harness, create a test object."""
     self._logger = MagicMock()
-    self._object = Logged(_Object, self._logger)()
+    self._object = self.createObject(self._logger)
 
 
   def testMethodInvocationNoArgumentsNoReturn(self):
@@ -127,6 +138,24 @@ class TestInvocationLogger(TestCase):
 
     self.assertEqual(self._object.method5(foo='test'), 'testtest')
     self.assertEqual(self._logger.call_args_list, expected_calls)
+
+
+# Note that the order of inheritance is important. InvocationLoggerTest
+# provides a setUp method and at some point TestCase (or some related
+# class) causes it to be invoked. So InvocationLoggerTest needs to be
+# first in the attribute lookup order.
+class TestInvocationLoggerForClass(InvocationLoggerTest, TestCase):
+  """Test case for the invocation logger facility for classes."""
+  def createObject(self, logger):
+    """Create an object to run our tests on."""
+    return Logged(_Object, logger)()
+
+
+class TestInvocationLoggerForObject(InvocationLoggerTest, TestCase):
+  """Test case for the invocation logger facility for objects."""
+  def createObject(self, logger):
+    """Create an object to run our tests on."""
+    return LoggedObj(_Object(), logger)
 
 
 class TestInvocationLoggerWithMeta(TestCase):
